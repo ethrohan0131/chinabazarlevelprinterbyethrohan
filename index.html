@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Label Printer Pro by ethrohan</title>
+<style>
+    /* =========================================
+       বেসিক পেজ ও লেআউট
+       ========================================= */
+    body {
+        margin: 0;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        display: flex;
+        height: 100vh;
+        background-color: #f0f2f5;
+        overflow: hidden;
+        user-select: none; /* টেক্সট কপি করা বন্ধ করার জন্য */
+    }
+
+    /* বাম পাশের কন্ট্রোল প্যানেল */
+    .sidebar {
+        width: 380px;
+        background-color: #ffffff;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 2px 0 15px rgba(0,0,0,0.08);
+        z-index: 10;
+    }
+
+    .form-section {
+        padding: 25px;
+        border-bottom: 2px solid #f3f4f6;
+        overflow-y: auto;
+    }
+
+    .queue-section {
+        flex: 1;
+        padding: 20px;
+        overflow-y: auto;
+        background-color: #fafafa;
+    }
+
+    /* =========================================
+       অ্যাপ হেডার স্টাইল 
+       ========================================= */
+    .app-header {
+        background-color: #1f2937;
+        color: white;
+        padding: 20px 25px;
+        border-bottom: 4px solid #2563eb;
+    }
+    .app-header h1 {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+    }
+    .app-header p {
+        margin: 4px 0 0 0;
+        font-size: 13px;
+        color: #9ca3af;
+    }
+    .app-header p span {
+        color: #60a5fa;
+        font-weight: bold;
+    }
+
+    h2 { margin-top: 0; color: #111827; font-size: 20px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;}
+    
+    /* =========================================
+       ফর্ম স্টাইল
+       ========================================= */
+    .input-row { display: flex; gap: 10px; margin-bottom: 15px; }
+    .input-group { flex: 1; }
+    
+    .input-group label {
+        display: block; font-size: 12px; font-weight: 700; color: #4b5563;
+        margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px;
+    }
+
+    .input-group input {
+        width: 100%; padding: 10px; border: 1.5px solid #d1d5db;
+        border-radius: 6px; font-size: 14px; font-weight: 500;
+        box-sizing: border-box; transition: all 0.2s;
+    }
+
+    .input-group input:focus {
+        outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+
+    .btn-primary {
+        width: 100%; background-color: #2563eb; color: white; border: none;
+        padding: 12px; border-radius: 6px; font-size: 15px; font-weight: 600;
+        cursor: pointer; transition: 0.2s; margin-top: 10px;
+    }
+    .btn-primary:hover { background-color: #1d4ed8; }
+    
+    .btn-update { background-color: #059669; }
+    .btn-update:hover { background-color: #047857; }
+
+    .btn-cancel {
+        width: 100%; background-color: #ef4444; color: white; border: none;
+        padding: 10px; border-radius: 6px; font-size: 14px; margin-top: 10px;
+        cursor: pointer; display: none;
+    }
+
+    /* =========================================
+       কিউ (Queue) লিস্ট স্টাইল
+       ========================================= */
+    .queue-list { display: flex; flex-direction: column; gap: 10px; }
+    
+    .queue-item {
+        background: white; border: 1px solid #e5e7eb; border-radius: 8px;
+        padding: 12px; display: flex; justify-content: space-between; align-items: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+
+    .queue-info h4 { margin: 0 0 4px 0; font-size: 14px; color: #111827; }
+    .queue-info p { margin: 0; font-size: 12px; color: #6b7280; }
+    .queue-badge { 
+        display: inline-block; background: #e0e7ff; color: #4338ca; 
+        font-size: 11px; font-weight: bold; padding: 2px 6px; border-radius: 4px; margin-top: 5px;
+    }
+
+    .queue-actions { display: flex; gap: 8px; }
+    .icon-btn {
+        background: none; border: none; cursor: pointer; padding: 5px;
+        border-radius: 4px; display: flex; align-items: center; justify-content: center;
+        transition: 0.2s;
+    }
+    .edit-btn { color: #059669; background: #ecfdf5; }
+    .edit-btn:hover { background: #d1fae5; }
+    .del-btn { color: #dc2626; background: #fef2f2; }
+    .del-btn:hover { background: #fee2e2; }
+
+    .print-all-btn {
+        width: calc(100% - 40px); margin: 20px; background-color: #111827;
+        color: white; border: none; padding: 15px; border-radius: 8px;
+        font-size: 16px; font-weight: bold; cursor: pointer;
+        display: flex; align-items: center; justify-content: center; gap: 10px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.2s;
+    }
+    .print-all-btn:hover { background-color: #000000; transform: translateY(-2px); }
+    .print-all-btn:disabled { background-color: #9ca3af; cursor: not-allowed; transform: none; }
+
+    /* =========================================
+       ক্রেডিট ফুটার 
+       ========================================= */
+    .credit-footer {
+        text-align: center;
+        padding: 5px 15px 15px;
+        font-size: 13px;
+        color: #9ca3af;
+    }
+    .credit-footer span {
+        color: #2563eb;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+    }
+    .contact-info {
+        margin-top: 10px;
+        font-size: 11px;
+        color: #6b7280;
+        line-height: 1.6;
+        background-color: #f8fafc;
+        padding: 8px 12px;
+        border-radius: 6px;
+        border: 1px solid #f1f5f9;
+        display: inline-block;
+        text-align: left;
+        user-select: text; /* টেক্সট কপি করার পারমিশন দেওয়া হলো */
+        -webkit-user-select: text; /* Safari সাপোর্ট */
+    }
+    .contact-info a {
+        color: #6b7280;
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+    .contact-info a:hover {
+        color: #2563eb;
+    }
+
+    /* =========================================
+       ডান পাশের লাইভ প্রিভিউ 
+       ========================================= */
+    .main-area {
+        flex: 1; display: flex; flex-direction: column; align-items: center;
+        overflow-y: auto; padding: 40px; position: relative;
+    }
+
+    .section-title {
+        font-size: 14px; text-transform: uppercase; letter-spacing: 1px;
+        color: #6b7280; font-weight: bold; margin-bottom: 20px; text-align: center;
+    }
+
+    .live-preview-box {
+        background: white; padding: 30px; border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.05); margin-bottom: 40px;
+    }
+
+    /* =========================================
+       লেবেল এর আসল ডিজাইন (75x50mm)
+       ========================================= */
+    .label-scale-wrapper {
+        transform: scale(2); /* স্ক্রিনে বড় দেখানোর জন্য */
+        transform-origin: top center;
+        width: 75mm; height: 50mm; /* Wrapper কেও নির্দিষ্ট মাপে রাখা হলো */
+    }
+
+    .label-container {
+        width: 75mm; height: 50mm; background-color: #ffffff;
+        position: relative; box-sizing: border-box; padding: 4mm 8mm 4mm 4mm;
+        font-family: 'Times New Roman', Times, serif; color: #000; overflow: hidden;
+        border: 1px dashed #ccc; /* স্ক্রিনে বর্ডার, প্রিন্টে হাইড হবে */
+    }
+
+    .main-content { display: flex; justify-content: space-between; width: 100%; height: 100%; position: relative; }
+    .col { width: 47%; position: relative; height: 100%; }
+    
+    .divider {
+        width: 1.2px; background-color: #000; height: 85%;
+        position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    }
+
+    .abs-text {
+        position: absolute; width: 100%; text-align: center; left: 0;
+        line-height: 1; white-space: nowrap; overflow: hidden;
+    }
+
+    /* ফন্ট সাইজ ও স্টাইল */
+    .title-text { font-size: 14pt; letter-spacing: 0.5px; }
+    .val-huge { font-size: 34pt; font-weight: bold; }
+    .val-large { font-size: 16pt; }
+    .val-size-num { font-size: 28pt; font-weight: bold; }
+
+    /* সাইড টেক্সট */
+    .side-text {
+        position: absolute; font-family: Arial, Helvetica, sans-serif;
+        font-size: 7.5pt; letter-spacing: 0.5px; color: #000; white-space: nowrap;
+    }
+    .top-right { right: 2.5mm; top: 3mm; writing-mode: vertical-rl; }
+    .bottom-right { right: 2.5mm; bottom: 3mm; writing-mode: vertical-rl; transform: rotate(180deg); }
+
+    /* =========================================
+       টোস্ট নোটিফিকেশন
+       ========================================= */
+    #toast {
+        visibility: hidden; min-width: 250px; background-color: #333; color: #fff;
+        text-align: center; border-radius: 8px; padding: 16px; position: fixed;
+        z-index: 1000; left: 50%; bottom: 30px; font-size: 15px; transform: translateX(-50%);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    #toast.show {
+        visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s;
+    }
+    @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
+    @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+
+    /* =========================================
+       প্রিন্টের জন্য স্পেশাল সিএসএস
+       ========================================= */
+    #print-container { display: none; } /* স্ক্রিনে লুকানো থাকবে */
+
+    @media print {
+        @page { size: 75mm 50mm; margin: 0; }
+        body { margin: 0; padding: 0; background: white; }
+        
+        /* UI এর সব কিছু লুকিয়ে ফেলো */
+        .no-print { display: none !important; }
+        
+        /* শুধু প্রিন্ট কন্টেইনার দেখাও */
+        #print-container { display: block !important; width: 100%; }
+        
+        .print-page {
+            width: 75mm; height: 50mm;
+            page-break-after: always; break-after: page;
+            position: relative; overflow: hidden; background: white;
+            box-sizing: border-box;
+        }
+        
+        /* প্রিন্টের সময় ড্যাশ বর্ডার সরিয়ে দাও */
+        .print-page .label-container { border: none; padding: 4mm 8mm 4mm 4mm;}
+    }
+
+    /* =========================================
+       লগিন স্ক্রিন (Security)
+       ========================================= */
+    #login-overlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background-color: #111827; z-index: 9999;
+        display: flex; justify-content: center; align-items: center;
+    }
+    .login-box {
+        background: white; padding: 40px; border-radius: 12px;
+        box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); text-align: center; width: 300px;
+    }
+    .login-box h2 { margin-top: 0; color: #1f2937; justify-content: center;}
+    .login-box p { color: #6b7280; font-size: 14px; margin-bottom: 20px;}
+    .login-box input {
+        width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px;
+        font-size: 16px; margin-bottom: 15px; box-sizing: border-box; text-align: center; letter-spacing: 2px;
+    }
+    .login-box input:focus { border-color: #2563eb; outline: none; }
+    .login-box button {
+        width: 100%; background: #2563eb; color: white; border: none; padding: 12px;
+        border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer;
+    }
+    .login-box button:hover { background: #1d4ed8; }
+    #login-error { color: #dc2626; font-size: 13px; margin-top: 10px; display: none; }
+    
+    @media print {
+        #login-overlay { display: none !important; }
+    }
+</style>
+</head>
+<body>
+
+<!-- লগিন স্ক্রিন ওভারলে -->
+<div id="login-overlay">
+    <div class="login-box">
+        <h2>🔒 Client Access</h2>
+        <p>Enter PIN to access Label Printer</p>
+        <input type="password" id="app-pin" placeholder="Enter PIN" onkeypress="if(event.key === 'Enter') checkPIN()">
+        <button onclick="checkPIN()">Login</button>
+        <div id="login-error">Incorrect PIN! Try again.</div>
+    </div>
+</div>
+
+<!-- বাম পাশের ফর্ম / ইনপুট প্যানেল (No Print) -->
+<div class="sidebar no-print">
+    <!-- নতুন অ্যাপ হেডার -->
+    <div class="app-header">
+        <h1>Smart Label Pro</h1>
+        <p>by <span>ethrohan</span></p>
+    </div>
+
+    <div class="form-section">
+        <h2 id="form-title">Add New Label</h2>
+        
+        <div class="input-row">
+            <div class="input-group">
+                <label>Article</label>
+                <input type="text" id="in-article" value="3931" oninput="updateLivePreview()">
+            </div>
+            <div class="input-group">
+                <label>Code</label>
+                <input type="text" id="in-code" value="TNKS" oninput="updateLivePreview()">
+            </div>
+        </div>
+        
+        <div class="input-row">
+            <div class="input-group">
+                <label>Color</label>
+                <input type="text" id="in-color" value="LITE PINK" oninput="updateLivePreview()">
+            </div>
+            <div class="input-group" style="flex: 0.5;">
+                <label>Size</label>
+                <input type="text" id="in-size" value="39" oninput="updateLivePreview()">
+            </div>
+        </div>
+
+        <div class="input-row">
+            <div class="input-group">
+                <label>Date</label>
+                <input type="text" id="in-date" value="07-03-2026" oninput="updateLivePreview()">
+            </div>
+            <div class="input-group">
+                <label>Brand</label>
+                <input type="text" id="in-brand" value="CHINA BAZAR" oninput="updateLivePreview()">
+            </div>
+        </div>
+
+        <div class="input-group" style="margin-top: 5px;">
+            <label style="color: #2563eb;">Copies (Quantity)</label>
+            <input type="number" id="in-qty" value="1" min="1" style="border-color: #93c5fd;">
+        </div>
+
+        <button id="main-btn" class="btn-primary" onclick="handleMainAction()">+ Add to Print Queue</button>
+        <button id="cancel-btn" class="btn-cancel" onclick="cancelEdit()">Cancel Edit</button>
+    </div>
+
+    <div class="queue-section">
+        <h2>Print Queue <span id="queue-count" style="font-size: 14px; color: #6b7280; font-weight: normal;">(0 labels)</span></h2>
+        <div id="queue-list" class="queue-list">
+            <!-- List items will appear here -->
+            <p style="text-align: center; color: #9ca3af; font-size: 13px; margin-top: 30px;">Queue is empty.<br>Add labels from the form above.</p>
+        </div>
+    </div>
+
+    <button id="print-btn" class="print-all-btn" onclick="printLabels()" disabled>
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+        </svg>
+        Print All Labels
+    </button>
+    
+    <!-- Credit Section -->
+    <div class="credit-footer">
+        Designed & Developed by <span>ethrohan</span>
+        <div class="contact-info">
+            📞 01301-693237<br>
+            ✉️ <a href="mailto:dgtrohan0132@gmail.com">dgtrohan0132@gmail.com</a>
+        </div>
+    </div>
+</div>
+
+<!-- ডান পাশের লাইভ প্রিভিউ (No Print) -->
+<div class="main-area no-print">
+    <div class="section-title">Live Preview (Updates as you type)</div>
+    
+    <div class="live-preview-box">
+        <div class="label-scale-wrapper" id="live-preview-container">
+            <!-- Live Preview content will be injected here -->
+        </div>
+    </div>
+</div>
+
+<!-- ==============================================================
+     প্রিন্ট কন্টেইনার (শুধুমাত্র প্রিন্ট করার সময় এই অংশটুকু কাজ করবে)
+     ============================================================== -->
+<div id="print-container">
+    <!-- Print pages will be generated here -->
+</div>
+
+<!-- Toast Notification -->
+<div id="toast">Message</div>
+
+<script>
+    // ==========================================
+    // Security & Anti-Theft Features
+    // ==========================================
+    
+    // 1. PIN System
+    const SECRET_PIN = "50407"; // <-- এখানে আপনার ক্লায়েন্টের জন্য পাসওয়ার্ড সেট করুন
+
+    function checkPIN() {
+        const pinInput = document.getElementById('app-pin').value;
+        if (pinInput === SECRET_PIN) {
+            document.getElementById('login-overlay').style.display = 'none';
+        } else {
+            const err = document.getElementById('login-error');
+            err.style.display = 'block';
+            setTimeout(() => err.style.display = 'none', 3000);
+        }
+    }
+
+    // 2. Disable Right Click
+    document.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+    });
+
+    // 3. Disable F12, Ctrl+Shift+I, Ctrl+U
+    document.onkeydown = function(e) {
+        if(e.keyCode == 123) { return false; } // F12
+        if(e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) { return false; } // Ctrl+Shift+I
+        if(e.ctrlKey && e.shiftKey && e.keyCode == 'C'.charCodeAt(0)) { return false; } // Ctrl+Shift+C
+        if(e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) { return false; } // Ctrl+Shift+J
+        if(e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) { return false; } // Ctrl+U
+    };
+
+    // Data Storage
+    let printQueue = [];
+    let editId = null;
+
+    // DOM Elements
+    const inArticle = document.getElementById('in-article');
+    const inCode = document.getElementById('in-code');
+    const inColor = document.getElementById('in-color');
+    const inSize = document.getElementById('in-size');
+    const inDate = document.getElementById('in-date');
+    const inBrand = document.getElementById('in-brand');
+    const inQty = document.getElementById('in-qty');
+    
+    const mainBtn = document.getElementById('main-btn');
+    const cancelBtn = document.getElementById('cancel-btn');
+    const formTitle = document.getElementById('form-title');
+    const queueListEl = document.getElementById('queue-list');
+    const printBtn = document.getElementById('print-btn');
+    const queueCountEl = document.getElementById('queue-count');
+
+    // Generate Label HTML Template
+    function getLabelHTML(data) {
+        return `
+        <div class="label-container">
+            <div class="main-content">
+                <div class="col">
+                    <div class="abs-text title-text" style="top: 0mm;">ARTICLE</div>
+                    <div class="abs-text val-huge" style="top: 6.5mm;">${data.article}</div>
+                    
+                    <div class="abs-text title-text" style="top: 26mm;">COLOR</div>
+                    <div class="abs-text val-large" style="top: 34.5mm;">${data.color}</div>
+                </div>
+                
+                <div class="divider"></div>
+                
+                <div class="col">
+                    <div class="abs-text title-text" style="top: 0mm;">CODE</div>
+                    <div class="abs-text val-large" style="top: 8mm;">${data.code}</div>
+                    
+                    <div class="abs-text title-text" style="top: 26mm;">SIZE</div>
+                    <div class="abs-text val-size-num" style="top: 33mm;">${data.size}</div>
+                </div>
+            </div>
+            
+            <div class="side-text top-right">${data.date}</div>
+            <div class="side-text bottom-right">${data.brand}</div>
+        </div>`;
+    }
+
+    // Update Live Preview instantly
+    function updateLivePreview() {
+        const currentData = {
+            article: inArticle.value || '...',
+            code: inCode.value || '...',
+            color: inColor.value || '...',
+            size: inSize.value || '...',
+            date: inDate.value || '...',
+            brand: inBrand.value || '...'
+        };
+        document.getElementById('live-preview-container').innerHTML = getLabelHTML(currentData);
+    }
+
+    // Add or Update action
+    function handleMainAction() {
+        const data = {
+            article: inArticle.value,
+            code: inCode.value,
+            color: inColor.value,
+            size: inSize.value,
+            date: inDate.value,
+            brand: inBrand.value,
+            qty: parseInt(inQty.value) || 1
+        };
+
+        if (editId !== null) {
+            // Update existing
+            const index = printQueue.findIndex(item => item.id === editId);
+            if(index > -1) {
+                printQueue[index] = { ...data, id: editId };
+                showToast("Label updated successfully!");
+            }
+            cancelEdit(); // reset form state
+        } else {
+            // Add new
+            data.id = Date.now().toString();
+            printQueue.push(data);
+            showToast(`${data.qty} Label(s) added to queue!`);
+        }
+        
+        renderQueue();
+    }
+
+    // Edit Item
+    function editItem(id) {
+        const item = printQueue.find(i => i.id === id);
+        if(!item) return;
+
+        // Populate Form
+        inArticle.value = item.article;
+        inCode.value = item.code;
+        inColor.value = item.color;
+        inSize.value = item.size;
+        inDate.value = item.date;
+        inBrand.value = item.brand;
+        inQty.value = item.qty;
+
+        updateLivePreview();
+
+        // Change Form State
+        editId = id;
+        formTitle.innerText = "Edit Label";
+        mainBtn.innerText = "✓ Save Changes";
+        mainBtn.classList.replace('btn-primary', 'btn-update');
+        cancelBtn.style.display = "block";
+    }
+
+    // Cancel Edit
+    function cancelEdit() {
+        editId = null;
+        formTitle.innerText = "Add New Label";
+        mainBtn.innerText = "+ Add to Print Queue";
+        mainBtn.classList.replace('btn-update', 'btn-primary');
+        cancelBtn.style.display = "none";
+        inQty.value = 1;
+    }
+
+    // Delete Item
+    function deleteItem(id) {
+        printQueue = printQueue.filter(item => item.id !== id);
+        renderQueue();
+        showToast("Label removed.");
+        if(editId === id) cancelEdit();
+    }
+
+    // Render Sidebar Queue List
+    function renderQueue() {
+        let totalLabels = 0;
+        
+        if (printQueue.length === 0) {
+            queueListEl.innerHTML = '<p style="text-align: center; color: #9ca3af; font-size: 13px; margin-top: 30px;">Queue is empty.<br>Add labels from the form above.</p>';
+            printBtn.disabled = true;
+            queueCountEl.innerText = "(0 labels)";
+            return;
+        }
+
+        queueListEl.innerHTML = "";
+        printQueue.forEach(item => {
+            totalLabels += item.qty;
+            const el = document.createElement('div');
+            el.className = 'queue-item';
+            el.innerHTML = `
+                <div class="queue-info">
+                    <h4>${item.article} - ${item.size}</h4>
+                    <p>${item.color} | ${item.code}</p>
+                    <span class="queue-badge">Copies: ${item.qty}</span>
+                </div>
+                <div class="queue-actions">
+                    <button class="icon-btn edit-btn" onclick="editItem('${item.id}')" title="Edit">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                    </button>
+                    <button class="icon-btn del-btn" onclick="deleteItem('${item.id}')" title="Delete">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </button>
+                </div>
+            `;
+            queueListEl.appendChild(el);
+        });
+
+        queueCountEl.innerText = `(${totalLabels} label${totalLabels > 1 ? 's' : ''})`;
+        printBtn.disabled = false;
+        printBtn.innerHTML = `
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+            </svg>
+            Print ${totalLabels} Label${totalLabels > 1 ? 's' : ''}
+        `;
+    }
+
+    // Print Logic
+    function printLabels() {
+        const printContainer = document.getElementById('print-container');
+        printContainer.innerHTML = ''; // clear previous
+
+        // Generate pages based on quantity
+        printQueue.forEach(item => {
+            const labelHTML = getLabelHTML(item);
+            for(let i = 0; i < item.qty; i++) {
+                const page = document.createElement('div');
+                page.className = 'print-page';
+                page.innerHTML = labelHTML;
+                printContainer.appendChild(page);
+            }
+        });
+
+        // Trigger print dialog
+        window.print();
+    }
+
+    // Toast Function
+    function showToast(msg) {
+        const toast = document.getElementById("toast");
+        toast.innerText = msg;
+        toast.className = "show";
+        setTimeout(function(){ toast.className = toast.className.replace("show", ""); }, 3000);
+    }
+
+    // Auto-set today's date
+    function setTodayDate() {
+        const today = new Date();
+        const dd = String(today.getDate()).padStart(2, '0');
+        const mm = String(today.getMonth() + 1).padStart(2, '0'); // January is 0!
+        const yyyy = today.getFullYear();
+        inDate.value = dd + '-' + mm + '-' + yyyy;
+    }
+
+    // Initialize on load
+    setTodayDate();
+    updateLivePreview();
+</script>
+
+</body>
+</html>
