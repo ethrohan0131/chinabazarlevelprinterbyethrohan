@@ -264,23 +264,23 @@
 
     @media print {
         @page { size: 75mm 50mm; margin: 0; }
-        body { margin: 0; padding: 0; background: white; }
+        body { margin: 0; padding: 0; background: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         
-        /* UI এর সব কিছু লুকিয়ে ফেলো */
-        .no-print { display: none !important; }
+        /* UI এর সব কিছু এবং পপআপ লুকিয়ে ফেলো */
+        .no-print, #toast, #login-overlay { display: none !important; }
         
         /* শুধু প্রিন্ট কন্টেইনার দেখাও */
-        #print-container { display: block !important; width: 100%; }
+        #print-container { display: block !important; width: 100%; margin: 0; padding: 0; }
         
         .print-page {
             width: 75mm; height: 50mm;
             page-break-after: always; break-after: page;
             position: relative; overflow: hidden; background: white;
-            box-sizing: border-box;
+            box-sizing: border-box; margin: 0; padding: 0;
         }
         
         /* প্রিন্টের সময় ড্যাশ বর্ডার সরিয়ে দাও */
-        .print-page .label-container { border: none; padding: 4mm 8mm 4mm 4mm;}
+        .print-page .label-container { border: none; padding: 4mm 8mm 4mm 4mm; width: 100%; height: 100%;}
     }
 
     /* =========================================
@@ -432,7 +432,7 @@
     // ==========================================
     
     // 1. PIN System
-    const SECRET_PIN = "50407"; // <-- এখানে আপনার ক্লায়েন্টের জন্য পাসওয়ার্ড সেট করুন
+    const SECRET_PIN = "12345"; // <-- এখানে আপনার ক্লায়েন্টের জন্য পাসওয়ার্ড সেট করুন
 
     function checkPIN() {
         const pinInput = document.getElementById('app-pin').value;
